@@ -7,14 +7,13 @@
 
 import paddle.fluid as fluid
 
-def window_net(
-           data,
-           label,
-           dict_dim,
-           class_num,
-           emb_dim=32,
-           linear_layer_size=64,
-           window_size=5):
+def window_net(data,
+               label,
+               dict_dim,
+               class_num,
+               emb_dim=32,
+               linear_layer_size=64,
+               window_size=5):
     """
     define the topology of the window network
 
@@ -33,7 +32,11 @@ def window_net(
     """
 
     # lookup table, the embedding layer
-    emb = fluid.layers.embedding(input=data, size=[dict_dim, emb_dim],param_attr='emb.w', is_sparse=True)
+    emb = fluid.layers.embedding(
+        input=data,
+        size=[dict_dim, emb_dim],
+        param_attr='emb.w',
+        is_sparse=True)
 
     # Linear Layer of global full connect
     # the filter_size equal to emb size
@@ -48,7 +51,9 @@ def window_net(
     tanh_layer = fluid.layers.tanh(emb_fc_layer)
 
     # prediction
-    prediction = fluid.layers.fc(input=[tanh_layer], size=class_num, act="softmax")
+    prediction = fluid.layers.fc(input=[tanh_layer],
+                                 size=class_num,
+                                 act="softmax")
 
     # cost and batch average cost
     cost = fluid.layers.cross_entropy(input=prediction, label=label)
@@ -60,8 +65,7 @@ def window_net(
     return avg_cost, acc, prediction
 
 
-def sentence_net(
-                 data,
+def sentence_net(data,
                  label,
                  dict_dim,
                  class_num,
@@ -100,10 +104,14 @@ def sentence_net(
         pool_type="max")
 
     # Linear Layer and tanh Layer
-    tanh_layer = fluid.layers.fc(input=[conv_layer], size=tanh_layer_size, act="tanh")
+    tanh_layer = fluid.layers.fc(input=[conv_layer],
+                                 size=tanh_layer_size,
+                                 act="tanh")
 
     # prediction
-    prediction = fluid.layers.fc(input=[tanh_layer], size=class_num, act="softmax")
+    prediction = fluid.layers.fc(input=[tanh_layer],
+                                 size=class_num,
+                                 act="softmax")
 
     # cost and batch average cost
     cost = fluid.layers.cross_entropy(input=prediction, label=label)

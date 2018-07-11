@@ -22,9 +22,9 @@ def train(topology,
           word_dict_path=None,
           label_dict_path=None,
           model_save_dir="models",
-          use_cuda = False,
+          use_cuda=False,
           window_size=5,
-          learning_rate = 0.001,
+          learning_rate=0.001,
           batch_size=64,
           num_passes=10):
     """
@@ -59,8 +59,9 @@ def train(topology,
         logger.info(("No training data are provided, "
                      "use Brown corpus to train the model."))
 
-        logger.info("loading Brown corpus...")
-        train_data_dir,test_data_dir,word_dict_path,label_dict_path = load_default_data()
+        logger.info("downloading Brown corpus...")
+        train_data_dir, test_data_dir, word_dict_path, label_dict_path = load_default_data(
+        )
 
         logger.info("please wait to build the word dictionary ...")
 
@@ -76,7 +77,7 @@ def train(topology,
             use_col=0,
             cutoff_fre=1,
             insert_extra_words=["<UNK>"])
-    logger.info("the word dictionary path is %s"%word_dict_path)
+    logger.info("the word dictionary path is %s" % word_dict_path)
 
     if not os.path.exists(label_dict_path):
         logger.info(("label dictionary is not given, the dictionary "
@@ -100,7 +101,8 @@ def train(topology,
     # get train data reader
     train_reader = paddle.batch(
         paddle.reader.shuffle(
-            reader.train_reader(train_data_dir, word_dict, lbl_dict,window_size),
+            reader.train_reader(train_data_dir, word_dict, lbl_dict,
+                                window_size),
             buf_size=51200),
         batch_size=batch_size)
 
@@ -109,7 +111,8 @@ def train(topology,
         # here, because training and testing data share a same format,
         # we still use the reader.train_reader to read the testing data.
         test_reader = paddle.batch(
-            reader.train_reader(test_data_dir, word_dict, lbl_dict,window_size),
+            reader.train_reader(test_data_dir, word_dict, lbl_dict,
+                                window_size),
             batch_size=batch_size)
     else:
         test_reader = None
@@ -125,7 +128,7 @@ def train(topology,
     label = fluid.layers.data(name="label", shape=[1], dtype="int64")
 
     # return the network result
-    cost, acc, prediction = topology(data, label, dict_dim,class_num=class_num)
+    cost, acc, prediction = topology(data, label, dict_dim, class_num=class_num)
 
     # create optimizer
     sgd_optimizer = fluid.optimizer.Adam(learning_rate=learning_rate)
@@ -145,7 +148,7 @@ def train(topology,
 
         ## running the train data
         data_size, data_count, total_acc, total_cost = 0, 0, 0.0, 0.0
-        for i,data_ in enumerate(train_reader()):
+        for i, data_ in enumerate(train_reader()):
             avg_cost_np, avg_acc_np = exe.run(prog,
                                               feed=feeder.feed(data_),
                                               fetch_list=[cost, acc])
@@ -154,22 +157,24 @@ def train(topology,
             total_cost += data_size * avg_cost_np
             data_count += data_size
 
-            if (i+1) % 1000 == 0:
+            if (i + 1) % 1000 == 0:
                 logger.info("pass_id: %d, batch %d, avg_acc: %f, avg_cost: %f" %
-                        (pass_id, i+1,total_acc/data_count, total_cost/data_count))
+                            (pass_id, i + 1, total_acc / data_count,
+                             total_cost / data_count))
 
         avg_cost = total_cost / data_count
         avg_acc = total_acc / data_count
         logger.info("Train result -- pass_id: %d,  avg_acc: %f, avg_cost: %f" %
-                (pass_id, avg_acc, avg_cost))
+                    (pass_id, avg_acc, avg_cost))
 
         ## running the test data
         if test_reader is not None:
             data_size, data_count, total_acc, total_cost = 0, 0, 0.0, 0.0
-            for i,data in enumerate(test_reader()):
-                avg_cost_np, avg_acc_np,prediction_np = exe.run(prog,
-                                                  feed=feeder.feed(data),
-                                                  fetch_list=[cost, acc, prediction])
+            for i, data in enumerate(test_reader()):
+                avg_cost_np, avg_acc_np, prediction_np = exe.run(
+                    prog,
+                    feed=feeder.feed(data),
+                    fetch_list=[cost, acc, prediction])
                 data_size = len(data)
                 total_acc += data_size * avg_acc_np
                 total_cost += data_size * avg_cost_np
@@ -177,12 +182,13 @@ def train(topology,
 
             avg_cost = total_cost / data_count
             avg_acc = total_acc / data_count
-            logger.info("Test result -- pass_id: %d,  avg_acc: %f, avg_cost: %f" %
-                    (pass_id, avg_acc, avg_cost))
+            logger.info("Test result -- pass_id: %d,  avg_acc: %f, avg_cost: %f"
+                        % (pass_id, avg_acc, avg_cost))
 
         ## save inference model
-        epoch_model = model_save_dir + "/" + args.nn_type + "_epoch" + str(pass_id%5)
-        logger.info("Saving inference model at %s" %(epoch_model))
+        epoch_model = model_save_dir + "/" + args.nn_type + "_epoch" + str(
+            pass_id % 5)
+        logger.info("Saving inference model at %s" % (epoch_model))
 
         ##prediction is the topology return value
         ##if we use the prediction value as the infer result

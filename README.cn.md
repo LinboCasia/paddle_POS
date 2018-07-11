@@ -14,8 +14,7 @@
 ├── infer.py            # 预测脚本
 ├── network_conf.py     # 本例中涉及的各种网络结构均定义在此文件中，若进一步修改模型结构，请查看此文件
 ├── reader.py           # 读取数据接口，若使用自定义格式的数据，请查看此文件
-├── README.cn.md        # 中文文档
-├── README.md           # 英文文档
+├── README.md           # 文档
 ├── run.sh              # 训练任务运行脚本，直接运行此脚本，将以默认参数开始训练任务
 ├── train.py            # 训练脚本
 └── utils.py            # 定义通用的函数，例如：打印日志、解析命令行参数、构建字典、加载字典等
@@ -41,10 +40,12 @@
 ## 模型详解
 
 `network_conf.py` 中包括以下模型：
+
 1. `window_net`： Window approach network 模型，是一个全局线性模型。使用基本的全连接结构。
 2. `sentence_net`：Sentence approach network 模型，是一个基础的序列模型，使用cnn结构，考虑局部区域之内的特征。
 
 两者各自的一些特点简单总结如下，详细内容可参考[Natural Language Processing (almost) from Scratch](https://arxiv.org/abs/1103.0398)：
+
 
 ### 1. Window approach network 模型
 
@@ -62,15 +63,15 @@
 - **中间线性连接隐层**：将固定size的词向量层进行线性变换，隐层为全连接结构，并使用激活函数。
 - **全连接与输出层**：输出层的神经元数量和样本的类别数一致，例如在二分类问题中，输出层会有2个神经元。通过Softmax激活函数，输出结果是一个归一化的概率分布，和为1，因此第$i$个神经元的输出就可以认为是样本属于第$i$类的预测概率。
 
-该 Window approach network 模型默认对输入的语料进行多分类（`class_dim=N`，词性的数量），embedding（词向量）维度默认为32（`emd_dim=32`），隐层均使用tanh激活函数。需要注意的是，该模型的输入数据为固定窗口大小的整数序列，而不是原始的单词序列。事实上，为了处理方便，我们一般会事先将单词根据词频顺序进行 id 化，即将词语转化成在字典中的序号。
+该 Window approach network 模型默认对输入的语料进行多分类（`class_dim=N`，词性的数量），embedding（词向量）维度默认为28（`emd_dim=28`），隐层均使用tanh激活函数。需要注意的是，该模型的输入数据为固定窗口大小的整数序列，而不是原始的单词序列。事实上，为了处理方便，我们一般会事先将单词根据词频顺序进行 id 化，即将词语转化成在字典中的序号。
 
-### 2. Sentence approach network  模型
+### 2. ：Sentence approach network  模型
 
 **Sentence approach network 模型结构如下图所示：**
 
 <p align="center">
 <img src="images/sentence_net.png" width = "90%" align="center"/><br/>
-图2. 本例中的 Sentence approach network 序列标注模型
+图2. 本例中的 Sentence approach network 文本分类模型
 </p>
 
 通过 PaddlePaddle 实现该 Sentence approach network 结构的代码见 `network_conf.py` 中的 `sentence_net` 函数，模型主要分为如下几个部分:
@@ -85,7 +86,7 @@
 
 - **全连接与输出层**：将最大池化的结果通过全连接层输出，与 DNN 模型一样，最后输出层的神经元个数与样本的类别数量一致，且输出之和为 1。
 
-Sentence approach network 网络的输入数据类型和 Window approach network 一致。PaddlePaddle 中已经封装好的带有池化的文本序列卷积模块：`paddle.fluid.nets.sequence_conv_pool`，可直接调用。该模块的 `filter_size` 参数用于指定卷积核在同一时间覆盖的文本长度，即图 2 中的卷积核的宽度。`num_filters` 用于指定该类型的卷积核的数量。本例代码默认使用了 64 个大小为 3 的卷积核，这些卷积的结果经过最大池化后产生一个 64 维的向量，向量经过一个全连接层输出最终的预测结果。
+Sentence approach network 网络的输入数据类型和 Window approach network 一致。PaddlePaddle 中已经封装好的带有池化的文本序列卷积模块：`paddle.fluid.nets.sequence_conv_pool`，可直接调用。该模块的 `filter_size` 参数用于指定卷积核在同一时间覆盖的文本长度，即图 2 中的卷积核的宽度。`num_filters` 用于指定该类型的卷积核的数量。本例代码默认使用了 128 个大小为 3 的卷积核，这些卷积的结果经过最大池化后产生一个 128 维的向量，向量经过一个全连接层输出最终的预测结果。
 
 ## 使用 PaddlePaddle 内置数据运行
 
@@ -114,12 +115,10 @@ pass_id: 0, batch 7000, avg_acc: 0.802003, avg_cost: 0.863187
 会看到如下输出：
 
 ```text
-s_POS = from/in Kansas/np-tl City/nn-tl Before/in his/pp$ departure/nn ,/, a/at group/nn of/in his/pp$ friends/nns ,/, the/at Reverend/np <UNK>/np among/in them/ppo ,/, had/hvd given/vbn him/ppo a/at luncheon/nn ,/, and/cc <UNK>/np had/hvd seen/vbn advance/nn sheets/nns of/in
-p_POS = from/in Kansas/np City/nn-tl Before/in his/pp$ departure/nn ,/, a/at group/nn of/in his/pp$ friends/nns ,/, the/at Reverend/np <UNK>/np among/in them/ppo ,/, had/hvd given/vbn him/ppo a/at luncheon/nn ,/, and/cc <UNK>/np had/hvd seen/vbn advance/nn sheets/nns of/in
-
+sample sample sample sample
 ```
 
-输出日志每两行是对一条样本预测的结果，以 `--` 分隔，分别是：（1）输入文本，s_POS(source POS)；（2）输出文本，p_POS(prediction POS)。
+输出日志每一行是对一条样本预测的结果，以 `/` 分隔，共 3 列，分别是：（1）预测类别标签；（2）样本分别属于每一类的概率，内部以空格分隔；（3）输入文本。
 
 ## 使用自定义数据训练和预测
 
@@ -173,6 +172,3 @@ p_POS = from/in Kansas/np City/nn-tl Before/in his/pp$ departure/nn ,/, a/at gro
     label_dict_path = "./data/brown/default_label.dict"    # 指定类别标签字典的路径
     ```
 2. 在终端中执行 `python infer.py`。
-
-# 参考文献
-[1] Collobert R, Weston J, Karlen M, et al. Natural Language Processing (Almost) from Scratch[J]. Journal of Machine Learning Research, 2011, 12(1):2493-2537.

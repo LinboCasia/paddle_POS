@@ -9,7 +9,6 @@ import logging
 import os
 import argparse
 from collections import defaultdict
-import requests
 import hashlib
 import zipfile
 import random
@@ -65,10 +64,7 @@ def parse_train_cmd():
         default=False,
         help="Whether use the cuda or not.")
     parser.add_argument(
-        "--window_size",
-        type=int,
-        default=5,
-        help="The size of window width.")
+        "--window_size", type=int, default=5, help="The size of window width.")
     parser.add_argument(
         "--learning_rate",
         type=float,
@@ -106,9 +102,9 @@ def build_dict(data_dir,
         if not os.path.isfile(file_path):
             continue
         with open(file_path, "r") as fdata:
-            for i,line in enumerate(fdata):
+            for i, line in enumerate(fdata):
 
-                if len(line) < 2 :
+                if len(line) < 2:
                     continue
 
                 for item in line.strip().split():
@@ -138,7 +134,7 @@ def load_reverse_dict(dict_path):
                 for idx, line in enumerate(open(dict_path, "r").readlines()))
 
 def reverse_dict(word_dict):
-    return dict(zip(word_dict.values(),word_dict.keys()))
+    return dict(zip(word_dict.values(), word_dict.keys()))
 
 def md5file(fname):
     hash_md5 = hashlib.md5()
@@ -155,25 +151,27 @@ def load_default_data():
 
     zip_filename = default_data_dir + "brown.zip"
     default_data_dir_brown = zip_filename[:-4]
-    default_data_train_dir = os.path.join(default_data_dir_brown ,"train")
-    default_data_test_dir = os.path.join(default_data_dir_brown ,"test")
-    default_word_dict_path = os.path.join(default_data_dir_brown ,"default_word.dict")
-    default_label_dict_path = os.path.join(default_data_dir_brown ,"default_label.dict")
+    default_data_train_dir = os.path.join(default_data_dir_brown, "train")
+    default_data_test_dir = os.path.join(default_data_dir_brown, "test")
+    default_word_dict_path = os.path.join(default_data_dir_brown,
+                                          "default_word.dict")
+    default_label_dict_path = os.path.join(default_data_dir_brown,
+                                           "default_label.dict")
 
     if not os.path.exists(default_data_dir_brown):
         os.makedirs(default_data_dir_brown)
 
-    data_url ="https://raw.githubusercontent.com/nltk/nltk_data/gh-pages/packages/corpora/brown.zip"
+    data_url = "https://raw.githubusercontent.com/nltk/nltk_data/gh-pages/packages/corpora/brown.zip"
     md5sum = "a0a8630959d3d937873b1265b0a05497"
 
-    if not (os.path.exists(zip_filename) and md5file(zip_filename) == md5sum):
-        if os.path.exists(zip_filename) :
+    if (not (os.path.exists(zip_filename)) or md5file(zip_filename) != md5sum):
+        if os.path.exists(zip_filename):
             os.remove(zip_filename)
-        r = requests.get(data_url)  # create HTTP response object
-        with open(zip_filename, 'wb') as f:
-            f.write(r.content)
 
-    if not (os.path.exists(default_data_train_dir)) or not (os.path.exists(default_data_test_dir)):
+        os.system("wget -O %s -c %s" % (zip_filename, data_url))
+
+    if not (os.path.exists(default_data_train_dir)) or not (
+            os.path.exists(default_data_test_dir)):
         os.makedirs(default_data_train_dir)
         os.makedirs(default_data_test_dir)
 
@@ -187,11 +185,10 @@ def load_default_data():
                 save_dir = default_data_test_dir
 
             data = f.read(filename)
-            f_ = open(os.path.join(save_dir , filename.split("/")[-1]), 'w+b')
-            f_.write(data)
-            f_.close()
+            with open(os.path.join(save_dir, filename.split("/")[-1]),
+                      'w+b') as f_:
+                f_.write(data)
 
         f.close()
 
-    return default_data_train_dir,default_data_test_dir,default_word_dict_path,default_label_dict_path
-
+    return default_data_train_dir, default_data_test_dir, default_word_dict_path, default_label_dict_path
