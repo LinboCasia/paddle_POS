@@ -2,7 +2,8 @@
 # Created on 2018
 # Author:Lin_Bo
 # Version 1.0
-# filename: network_conf.py
+# filename: network_conf.py
+
 import paddle
 from paddle import fluid
 import paddle.fluid as fluid
@@ -35,7 +36,8 @@ def window_net(data,
         input=data,
         size=[dict_dim, emb_dim],
         param_attr='emb.w',
-        is_sparse=True)		
+        is_sparse=True)
+		
     # Linear Layer of global full connect
     # the filter_size equal to emb size
     emb_fc_layer = fluid.nets.sequence_conv_pool(
@@ -43,18 +45,23 @@ def window_net(data,
         num_filters=linear_layer_size,
         filter_size=window_size,
         act=None,
-        pool_type="sum")		
+        pool_type="sum")
+		
     # Tanh Layer
-    tanh_layer = fluid.layers.tanh(emb_fc_layer)	
+    tanh_layer = fluid.layers.tanh(emb_fc_layer)
+	
     # prediction
     prediction = fluid.layers.fc(input=[tanh_layer],
                                  size=class_num,
-                                 act="softmax")								 
+                                 act="softmax")
+								 
     # cost and batch average cost
     cost = fluid.layers.cross_entropy(input=prediction, label=label)
-    avg_cost = fluid.layers.mean(x=cost)	
+    avg_cost = fluid.layers.mean(x=cost)
+	
     # batch accuracy
-    acc = fluid.layers.accuracy(input=prediction, label=label)	
+    acc = fluid.layers.accuracy(input=prediction, label=label)
+	
     return avg_cost, acc, prediction
 
 def sentence_net(data,
@@ -84,25 +91,31 @@ def sentence_net(data,
     :type tanh_layer_size: int
     """
     # lookup table, the embedding layer
-    emb = fluid.layers.embedding(input=data, size=[dict_dim, emb_dim])	
+    emb = fluid.layers.embedding(input=data, size=[dict_dim, emb_dim])
+	
     # convolution layers with max pooling
     conv_layer = fluid.nets.sequence_conv_pool(
         input=emb,
         num_filters=hid_dim,
         filter_size=kernel_width,
         act=None,
-        pool_type="max")		
+        pool_type="max")
+		
     # Linear Layer and tanh Layer
     tanh_layer = fluid.layers.fc(input=[conv_layer],
                                  size=tanh_layer_size,
-                                 act="tanh")								 
+                                 act="tanh")
+								 
     # prediction
     prediction = fluid.layers.fc(input=[tanh_layer],
                                  size=class_num,
-                                 act="softmax")								 
+                                 act="softmax")
+								 
     # cost and batch average cost
     cost = fluid.layers.cross_entropy(input=prediction, label=label)
-    avg_cost = fluid.layers.mean(x=cost	
+    avg_cost = fluid.layers.mean(x=cost
+	
     # batch accuracy
-    acc = fluid.layers.accuracy(input=prediction, label=label	
+    acc = fluid.layers.accuracy(input=prediction, label=label
+	
     return avg_cost, acc, prediction
